@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "TEST": "node ../../../pkg/dist-node/index.bin.js --clean"
+  },
+  "dependencies": {
+    "mock-test-package": "^1.2.3"
+  }
+}

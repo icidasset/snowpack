@@ -60,6 +60,7 @@ ${chalk.bold('Options:')}
   --nomodule [path]         Your app’s entry file for generating a <script nomodule> bundle
   --nomodule-output [path]  Filename for nomodule output (default: 'app.nomodule.js')
     ${chalk.bold('Advanced:')}
+  --node-env [val]          Replace "process.env.NODE_ENV". (default: "development", or "production" when used with --optimize.)
   --external-package [val]  Internal use only, may be removed at any time.
     `.trim(),
   );
@@ -271,6 +272,7 @@ export async function install(
       sourceMap,
       strict: isStrict,
       stat: withStats,
+      nodeEnv,
     },
     rollup: userDefinedRollup,
   } = config;
@@ -338,7 +340,7 @@ export async function install(
       rollupPluginEntrypointAlias({cwd}),
       !isStrict &&
         rollupPluginReplace({
-          'process.env.NODE_ENV': isOptimized ? '"production"' : '"development"',
+          'process.env.NODE_ENV': nodeEnv || (isOptimized ? '"production"' : '"development"'),
         }),
       rollupPluginNodeResolve({
         mainFields: ['browser:module', 'module', 'browser', !isStrict && 'main'].filter(Boolean),

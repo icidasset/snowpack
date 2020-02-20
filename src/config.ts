@@ -41,6 +41,7 @@ export interface SnowpackConfig {
     sourceMap?: boolean | 'inline';
     stat?: boolean;
     strict?: boolean;
+    nodeEnv?: string;
   };
   rollup?: {
     plugins?: RollupOptions['plugins']; // for simplicity, only Rollup plugins are supported for now
@@ -77,6 +78,7 @@ const configSchema = {
         sourceMap: {oneOf: [{type: 'boolean'}, {type: 'string'}]},
         stat: {type: 'boolean'},
         strict: {type: 'boolean'},
+        nodeEnv: {type: 'string'},
       },
     },
     rollup: {

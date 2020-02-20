@@ -77,6 +77,7 @@ Snowpack supports configuration files in multiple formats. Snowpack will look fo
 | `--source-map`       | `sourceMap`       | `boolean`  | See Description.  | Emit source maps. Enabled automatically by `--optimize`. Can be disabled via CLI flag via `--no-source-map`.                                                                                           |
 | `--nomodule`         | `nomodule`        | `string`   |                   | Enable a `<script nomodule>` bundle. Value should be the entrypoint of your application to start bundling from. See our [Supporting Legacy Browsers](#supporting-legacy-browsers) guide for more info. |
 | `--nomodule-output`  | `nomoduleOutput`  | `string`   | `app.nomodule.js` | File name/path for the nomodule output.                                                                                                                                                                |
+| `--node-env`         | `nodeEnv`         | `string`   | See Description.  | (Advanced use only) Replace "process.env.NODE_ENV" inside installed packages. Defaults to "development", or "production" when used with --optimize enabled.)                                           |
 | `--external-package` | `externalPackage` | `string[]` | `[]`              | (Advanced use only) Mark these packages as external to be left unbundled and referenced remotely. Example: `--external-package foo` will leave in all imports of `foo`.                                |
 
 You can also use the `--help` flag to see a list of these options on the command line.

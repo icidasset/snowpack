@@ -1,0 +1,6 @@
+{
+  "installOptions": {
+    "optimize": true,
+    "nodeEnv": "some-env"
+  }
+}
