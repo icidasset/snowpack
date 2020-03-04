@@ -395,7 +395,7 @@ export async function install(
   if (Object.keys(installEntrypoints).length > 0) {
     try {
       const packageBundle = await rollup(inputOptions);
-      logUpdate('');
+      logUpdate(formatInstallResults(skipFailures));
       await packageBundle.write(outputOptions);
     } catch (err) {
       const {loc} = err as RollupError;
@@ -486,8 +486,17 @@ export async function cli(args: string[]) {
     await clearCache();
   }
 
+  // Load the current package manifest
+  let pkgManifest: any;
+  try {
+    pkgManifest = require(path.join(cwd, 'package.json'));
+  } catch (err) {
+    console.log(chalk.red('[ERROR] package.json required but no file was found.'));
+    process.exit(0);
+  }
+
   // load config
-  const {config, errors} = loadConfig(cliFlags);
+  const {config, errors} = loadConfig(cliFlags, pkgManifest);
 
   // handle config errors (if any)
   if (Array.isArray(errors) && errors.length) {
@@ -510,17 +519,9 @@ export async function cli(args: string[]) {
 
   const {
     installOptions: {clean, dest, exclude, include},
-    webDependencies,
+    entrypoints: configInstallTargets,
     source,
   } = config;
-
-  let pkgManifest: any;
-  try {
-    pkgManifest = require(path.join(cwd, 'package.json'));
-  } catch (err) {
-    console.log(chalk.red('[ERROR] package.json required but no file was found.'));
-    process.exit(0);
-  }
 
   const implicitDependencies = [
     ...Object.keys(pkgManifest.peerDependencies || {}),
@@ -535,15 +536,15 @@ export async function cli(args: string[]) {
   let isExplicit = false;
   const installTargets: InstallTarget[] = [];
 
-  if (webDependencies) {
+  if (configInstallTargets) {
     isExplicit = true;
-    installTargets.push(...scanDepList(webDependencies, cwd));
+    installTargets.push(...scanDepList(configInstallTargets, cwd));
   }
   if (include) {
     isExplicit = true;
     installTargets.push(...(await scanImports({include, exclude})));
   }
-  if (!webDependencies && !include) {
+  if (!isExplicit) {
     installTargets.push(...scanDepList(implicitDependencies, cwd));
   }
   if (installTargets.length === 0) {

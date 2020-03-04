@@ -28,7 +28,7 @@ export function rollupPluginDependencyCache({log}: {log: (url: string) => void})
       // If the source path is a CDN path including a hash, it's assumed the
       // file will never change and it is safe to pull from our local cache
       // without a network request.
-      log(source);
+      log(cacheKey);
       if (HAS_CDN_HASH_REGEX.test(source)) {
         const cachedResult = await cacache.get
           .info(RESOURCE_CACHE, cacheKey)
@@ -61,6 +61,7 @@ export function rollupPluginDependencyCache({log}: {log: (url: string) => void})
         return null;
       }
       const cacheKey = id.substring(CACHED_FILE_ID_PREFIX.length);
+      log(cacheKey);
       const cachedResult = await cacache.get(RESOURCE_CACHE, cacheKey);
       return cachedResult.data.toString('utf8');
     },

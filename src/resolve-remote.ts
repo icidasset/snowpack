@@ -93,6 +93,8 @@ export async function resolveTargetsFromRemoteCDN(
   const allInstallSpecifiers = new Set(installTargets.map(dep => dep.specifier));
   for (const installSpecifier of allInstallSpecifiers) {
     const installSemver: string =
+      (config.webDependencies || {})[installSpecifier] ||
+      (pkgManifest.webDependencies || {})[installSpecifier] ||
       (pkgManifest.dependencies || {})[installSpecifier] ||
       (pkgManifest.devDependencies || {})[installSpecifier] ||
       (pkgManifest.peerDependencies || {})[installSpecifier] ||

@@ -2,7 +2,7 @@ import path from 'path';
 import {cosmiconfigSync} from 'cosmiconfig';
 import {Plugin} from 'rollup';
 import {validate} from 'jsonschema';
-import merge from 'deepmerge';
+import {all as merge} from 'deepmerge';
 
 const CONFIG_NAME = 'snowpack';
 
@@ -17,7 +17,8 @@ type DeepPartial<T> = {
 // interface this library uses internally
 export interface SnowpackConfig {
   source: 'local' | 'pika';
-  webDependencies?: string[];
+  webDependencies?: {[packageName: string]: string};
+  entrypoints?: string[];
   dedupe?: string[];
   namedExports?: {[filepath: string]: string[]};
   installOptions: {
@@ -51,8 +52,7 @@ export interface CLIFlags extends Partial<SnowpackConfig['installOptions']> {
 }
 
 // default settings
-const DEFAULT_CONFIG: SnowpackConfig = {
-  source: 'local',
+const DEFAULT_CONFIG: Partial<SnowpackConfig> = {
   dedupe: [],
   installOptions: {
     clean: false,
@@ -73,7 +73,12 @@ const configSchema = {
   type: 'object',
   properties: {
     source: {type: 'string'},
-    webDependencies: {type: 'array', items: {type: 'string'}},
+    entrypoints: {type: 'array', items: {type: 'string'}},
+    webDependencies: {
+      type: ['array', 'object'],
+      additionalProperties: {type: 'string'},
+      items: {type: 'string'},
+    },
     dedupe: {
       type: 'array',
       items: {type: 'string'},
@@ -126,13 +131,21 @@ function expandCliFlags(flags: CLIFlags): DeepPartial<SnowpackConfig> {
   return result;
 }
 
-/** resolve --dest relative to cwd */
-function normalizeDest(config: SnowpackConfig) {
+/** resolve --dest relative to cwd, and set the default "source" */
+function normalizeConfig(config: SnowpackConfig): SnowpackConfig {
   config.installOptions.dest = path.resolve(process.cwd(), config.installOptions.dest);
+  if (Array.isArray(config.webDependencies)) {
+    config.entrypoints = config.webDependencies;
+    delete config.webDependencies;
+  }
+  if (!config.source) {
+    const isDetailedObject = config.webDependencies && typeof config.webDependencies === 'object';
+    config.source = isDetailedObject ? 'pika' : 'local';
+  }
   return config;
 }
 
-export default function loadConfig(flags: CLIFlags) {
+export default function loadConfig(flags: CLIFlags, pkgManifest: any) {
   const cliConfig = expandCliFlags(flags);
 
   const explorerSync = cosmiconfigSync(CONFIG_NAME, {
@@ -160,7 +173,9 @@ export default function loadConfig(flags: CLIFlags) {
   if (!result || !result.config || result.isEmpty) {
     // if CLI flags present, apply those as overrides
     return {
-      config: normalizeDest(merge<any>(DEFAULT_CONFIG, cliConfig)),
+      config: normalizeConfig(
+        merge<SnowpackConfig>([DEFAULT_CONFIG, cliConfig as any]),
+      ),
       errors,
     };
   }
@@ -174,11 +189,16 @@ export default function loadConfig(flags: CLIFlags) {
   });
 
   // if valid, apply config over defaults
-  const mergedConfig = merge(DEFAULT_CONFIG, config);
+  const mergedConfig = merge<SnowpackConfig>([
+    DEFAULT_CONFIG,
+    {webDependencies: pkgManifest.webDependencies},
+    config,
+    cliConfig as any,
+  ]);
 
   // if CLI flags present, apply those as overrides
   return {
-    config: normalizeDest(merge<any>(mergedConfig, cliConfig)),
+    config: normalizeConfig(mergedConfig),
     errors: validation.errors.map(msg => `${path.basename(result.filepath)}: ${msg.toString()}`),
   };
 }
