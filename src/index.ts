@@ -319,6 +319,10 @@ export async function install(
         rollupPluginReplace({
           'process.env.NODE_ENV': isOptimized ? '"production"' : '"development"',
         }),
+
+      // User-defined plugins to run BEFORE resolving node-requires
+      ...(userDefinedRollup.pluginsBeforeResolve || []),
+
       rollupPluginNodeResolve({
         mainFields: ['browser:module', 'module', 'browser', !isStrict && 'main'].filter(isTruthy),
         modulesOnly: isStrict, // Default: false
@@ -359,7 +363,13 @@ export async function install(
       !!isOptimized && rollupPluginTreeshakeInputs(installTargets),
       !!isOptimized && rollupPluginTerser(),
       !!withStats && rollupPluginDependencyStats(info => (dependencyStats = info)),
-      ...userDefinedRollup.plugins, // load user-defined plugins last
+
+      // User-defined plugins to run AFTER resolving node-requires
+      ...(
+        userDefinedRollup.pluginsAfterResolve ||
+        userDefinedRollup.plugins ||
+        []
+      ),
     ],
     onwarn(warning, warn) {
       if (warning.code === 'UNRESOLVED_IMPORT') {

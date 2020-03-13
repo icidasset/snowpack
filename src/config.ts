@@ -38,7 +38,9 @@ export interface SnowpackConfig {
     strict: boolean;
   };
   rollup: {
-    plugins: Plugin[]; // for simplicity, only Rollup plugins are supported for now
+    plugins?: Plugin[]; // for simplicity, only Rollup plugins are supported for now
+    pluginsAfterResolve?: Plugin[]; // same as plugins
+    pluginsBeforeResolve?: Plugin[];
   };
 }
 
@@ -66,7 +68,7 @@ const DEFAULT_CONFIG: SnowpackConfig = {
     stat: false,
     strict: false,
   },
-  rollup: {plugins: []},
+  rollup: {}
 };
 
 const configSchema = {
@@ -106,6 +108,8 @@ const configSchema = {
       type: 'object',
       properties: {
         plugins: {type: 'array', items: {type: 'object'}}, // type: 'object' ensures the user loaded the Rollup plugins correctly
+        pluginsAfterResolve: {type: 'array', items: {type: 'object'}},
+        pluginsBeforeResolve: {type: 'array', items: {type: 'object'}},
       },
     },
   },
